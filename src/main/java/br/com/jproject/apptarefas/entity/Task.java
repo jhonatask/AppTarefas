@@ -1,27 +1,26 @@
 package br.com.jproject.apptarefas.entity;
 
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-import javax.persistence.*;
+import java.util.UUID;
+
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
+@Document(collection = "tasks")
 public class Task {
 
-    public static final String PENDENTE = "P";
-    public static final String CONCLUIDA = "C";
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private UUID id;
     private String name;
-    @Column(nullable = false, length = 1000)
     private String description;
-    @Column(nullable = false)
     private String priority;
-    @Column(nullable = false)
     private String status;
+    private boolean completed;
 }
