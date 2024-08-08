@@ -1,9 +1,9 @@
-package br.com.jproject.apptarefas.entity;
+package br.com.jproject.apptarefas.entities;
 
-import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.UUID;
@@ -22,5 +22,4 @@ public class Task {
     private String description;
     private String priority;
     private String status;
-    private boolean completed;
 }

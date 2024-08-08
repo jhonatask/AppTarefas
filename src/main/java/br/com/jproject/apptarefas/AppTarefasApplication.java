@@ -2,10 +2,11 @@ package br.com.jproject.apptarefas;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+
 
 @SpringBootApplication
-@EnableSwagger2
+@EnableMongoRepositories
 public class AppTarefasApplication {
 
     public static void main(String[] args) {

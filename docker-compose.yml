@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:4.4
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: Pamonha123*
+      MONGO_INITDB_DATABASE: taskdb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongovolume:/data/db
+
+  redis:
+    image: redis:latest
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  app:
+    depends_on:
+      - mongodb
+      - redis
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: apptasks
+    restart: on-failure
+    env_file: ./.env
+    ports:
+      - ${SPRING_LOCAL_PORT}:${SPRING_DOCKER_PORT}
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://root:Pamonha123*@localhost:27017/tasksdb?authSource=admin
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+    volumes:
+      - .m2:/root/.m2
+    stdin_open: true
+    tty: true
+
+volumes:
+  mongovolume:
