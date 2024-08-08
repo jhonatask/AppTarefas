@@ -1,22 +1,23 @@
 package br.com.jproject.apptarefas.services;
 
-import br.com.jproject.apptarefas.dto.TaskDTO;
-import br.com.jproject.apptarefas.entity.Task;
+import br.com.jproject.apptarefas.dto.request.TaskRequestDTO;
+import br.com.jproject.apptarefas.dto.response.TaskDTO;
+import br.com.jproject.apptarefas.entities.Task;
+import br.com.jproject.apptarefas.enums.StatusTask;
 import br.com.jproject.apptarefas.mapper.TaskMapperDTO;
 import br.com.jproject.apptarefas.repository.TaskRepository;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import javax.transaction.Transactional;
-import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class TaskService {
 
 
     private final TaskRepository taskRepository;
-
     private final TaskMapperDTO taskMapperDTO;
 
     public TaskService(TaskRepository taskRepository, TaskMapperDTO taskMapperDTO) {
@@ -24,51 +25,51 @@ public class TaskService {
         this.taskMapperDTO = taskMapperDTO;
     }
 
-    public Page<TaskDTO> findTaskAllOrFilter(String status, Pageable pageable){
-        Page<Task> result;
-        result = (status == null ? taskRepository.findAll(pageable) : taskRepository.findByStatusContaining(status, pageable));
-        return result.map(taskMapperDTO::taskTotaskDTO);
-    }
-
-    @Transactional
-    public TaskDTO createTask(TaskDTO taskDTO) {
-        Task task = taskMapperDTO.taskDtoToTask(taskDTO);
-        task.setName(taskDTO.name);
-        task.setDescription(taskDTO.description);
-        task.setPriority(taskDTO.priority);
-        task.setStatus(Task.PENDENTE);
-        taskRepository.save(task);
-        return taskMapperDTO.taskTotaskDTO(task);
-    }
-
-    @Transactional
-    public void deleteTask(Integer id) {
-        Optional<Task> task = taskRepository.findById(id);
-        if (task.isPresent()) taskRepository.delete(task.get());
-    }
-
-    @Transactional
-    public TaskDTO updateTask(Integer id, TaskDTO taskDTO) {
-        Optional<Task> task = taskRepository.findById(id);
-        if (task.isPresent()){
-            Task replaceTask = task.get();
-            replaceTask.setPriority(taskDTO.priority);
-            replaceTask.setDescription(taskDTO.description);
-            taskRepository.save(replaceTask);
-            return taskMapperDTO.taskTotaskDTO(replaceTask);
+    public Flux<TaskDTO> findTaskAllOrFilter(String status, Pageable pageable) {
+        if (status == null) {
+            return taskRepository.findAll()
+                    .buffer(pageable.getPageSize(), pageable.getPageNumber() * pageable.getPageSize())
+                    .flatMap(Flux::fromIterable)
+                    .map(taskMapperDTO::taskTotaskDTO);
+        } else {
+            return taskRepository.findByStatusContaining(status, pageable)
+                    .buffer(pageable.getPageSize(), pageable.getPageNumber() * pageable.getPageSize())
+                    .flatMap(Flux::fromIterable)
+                    .map(taskMapperDTO::taskTotaskDTO);
         }
-        return null;
     }
 
-    @Transactional
-    public TaskDTO makeTaskConcluded(Integer id) {
-        Optional<Task> task = taskRepository.findById(id);
-        if (task.isPresent()){
-            Task replaceTask = task.get();
-            replaceTask.setStatus(Task.CONCLUIDA);
-            taskRepository.save(replaceTask);
-            return taskMapperDTO.taskTotaskDTO(replaceTask);
-        }
-        return null;
+    public Mono<TaskDTO> createTask(TaskRequestDTO taskDTO) {
+        Task task = taskMapperDTO.taskRequestDtoTotask(taskDTO);
+        task.setName(taskDTO.getName());
+        task.setDescription(taskDTO.getDescription());
+        task.setPriority(taskDTO.getPriority());
+        task.setStatus(StatusTask.OPEN.getStatus());
+        return taskRepository.save(task)
+                .map(taskMapperDTO::taskTotaskDTO);
+    }
+
+    public Mono<Void> deleteTask(UUID id) {
+        return taskRepository.findById(id)
+                .flatMap(taskRepository::delete);
+    }
+
+    public Mono<TaskDTO> updateTask(UUID id, TaskRequestDTO taskDTO) {
+        return taskRepository.findById(id)
+                .flatMap(task -> {
+                    task.setPriority(taskDTO.getPriority());
+                    task.setDescription(taskDTO.getDescription());
+                    return taskRepository.save(task);
+                })
+                .map(taskMapperDTO::taskTotaskDTO);
+    }
+
+    public Mono<TaskDTO> makeTaskConcluded(UUID id) {
+        return taskRepository.findById(id)
+                .flatMap(task -> {
+                    task.setStatus(StatusTask.DONE.getStatus());
+                    return taskRepository.save(task);
+                })
+                .map(taskMapperDTO::taskTotaskDTO);
     }
 }
