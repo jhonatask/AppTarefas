@@ -41,7 +41,6 @@ public class User {
     @Field("dataalteracao")
     private Date dataalteracao;
 
-    @DBRef
     private Set<Role> roles;
 
     public User() {
