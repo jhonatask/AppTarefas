@@ -35,7 +35,7 @@ public class AdminUserDataInitializationConfig implements CommandLineRunner {
 
     public Mono<Void> runReactive() {
         return roleRepository.findByName(RolesValuesEnum.ADMIN.name())
-                .flatMap(roleAdmin -> userRepository.findByName("admin")
+                .flatMap(roleAdmin -> userRepository.findByEmail("admin@tasks.com.br")
                         .flatMap(user -> {
                             System.out.println("admin ja existe");
                             return Mono.empty();

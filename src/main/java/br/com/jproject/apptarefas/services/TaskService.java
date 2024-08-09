@@ -26,15 +26,18 @@ public class TaskService {
     }
 
     public Flux<TaskDTO> findTaskAllOrFilter(String status, Pageable pageable) {
+        int pageSize = pageable.getPageSize();
+        int pageNumber = pageable.getPageNumber();
+
         if (status == null) {
             return taskRepository.findAll()
-                    .buffer(pageable.getPageSize(), pageable.getPageNumber() * pageable.getPageSize())
-                    .flatMap(Flux::fromIterable)
+                    .skip((long) pageSize * pageNumber)
+                    .take(pageSize)
                     .map(taskMapperDTO::taskTotaskDTO);
         } else {
-            return taskRepository.findByStatusContaining(status, pageable)
-                    .buffer(pageable.getPageSize(), pageable.getPageNumber() * pageable.getPageSize())
-                    .flatMap(Flux::fromIterable)
+            return taskRepository.findByStatusContaining(status)
+                    .skip((long) pageSize * pageNumber)
+                    .take(pageSize)
                     .map(taskMapperDTO::taskTotaskDTO);
         }
     }

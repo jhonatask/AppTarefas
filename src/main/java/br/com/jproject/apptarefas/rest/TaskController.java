@@ -56,7 +56,7 @@ public class TaskController {
             @ApiResponse(responseCode = "404", description = "Error",
                     content = @Content) })
     @PostMapping
-    @PreAuthorize("hasRole('scope_BASIC')")
+    @PreAuthorize("hasAuthority('scope_BASIC')")
     public Mono<ResponseEntity<TaskDTO>> createTask(@RequestBody TaskRequestDTO taskDTO) {
         return taskService.createTask(taskDTO)
                 .map(task -> ResponseEntity.status(HttpStatus.CREATED).body(task));
@@ -89,7 +89,7 @@ public class TaskController {
             @ApiResponse(responseCode = "404", description = "Error",
                     content = @Content) })
     @PatchMapping(path = "/{id}")
-    @PreAuthorize("hasRole('scope_BASIC')")
+    @PreAuthorize("hasAuthority('scope_BASIC')")
     public Mono<ResponseEntity<TaskDTO>> makeTaskConcluded(@PathVariable UUID id) {
         return taskService.makeTaskConcluded(id)
                 .map(taskDTO -> ResponseEntity.status(HttpStatus.OK).body(taskDTO))
@@ -107,7 +107,7 @@ public class TaskController {
             @ApiResponse(responseCode = "404", description = "Error",
                     content = @Content) })
     @DeleteMapping(path = "/{id}")
-    @PreAuthorize("hasRole('scope_ADMIN')")
+    @PreAuthorize("hasAuthority('scope_ADMIN')")
     public Mono<ResponseEntity<Void>> deleteTask(@PathVariable UUID id) {
         return taskService.deleteTask(id)
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.NO_CONTENT)));
