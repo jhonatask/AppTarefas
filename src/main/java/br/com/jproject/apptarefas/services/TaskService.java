@@ -6,8 +6,8 @@ import br.com.jproject.apptarefas.entities.Task;
 import br.com.jproject.apptarefas.enums.StatusTask;
 import br.com.jproject.apptarefas.mapper.TaskMapperDTO;
 import br.com.jproject.apptarefas.repository.TaskRepository;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -19,37 +19,46 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TaskMapperDTO taskMapperDTO;
+    private final S3Service s3Service;
 
-    public TaskService(TaskRepository taskRepository, TaskMapperDTO taskMapperDTO) {
+    public TaskService(TaskRepository taskRepository, TaskMapperDTO taskMapperDTO, S3Service s3Service) {
         this.taskRepository = taskRepository;
         this.taskMapperDTO = taskMapperDTO;
+        this.s3Service = s3Service;
     }
 
-    public Flux<TaskDTO> findTaskAllOrFilter(String status, Pageable pageable) {
-        int pageSize = pageable.getPageSize();
-        int pageNumber = pageable.getPageNumber();
+    public Flux<TaskDTO> findTaskAllOrFilter(String status) {
 
         if (status == null) {
             return taskRepository.findAll()
-                    .skip((long) pageSize * pageNumber)
-                    .take(pageSize)
                     .map(taskMapperDTO::taskTotaskDTO);
         } else {
             return taskRepository.findByStatusContaining(status)
-                    .skip((long) pageSize * pageNumber)
-                    .take(pageSize)
                     .map(taskMapperDTO::taskTotaskDTO);
         }
     }
 
-    public Mono<TaskDTO> createTask(TaskRequestDTO taskDTO) {
+    public Mono<TaskDTO> createTask(TaskRequestDTO taskDTO, MultipartFile file) {
         Task task = taskMapperDTO.taskRequestDtoTotask(taskDTO);
         task.setName(taskDTO.getName());
         task.setDescription(taskDTO.getDescription());
         task.setPriority(taskDTO.getPriority());
         task.setStatus(StatusTask.OPEN.getStatus());
+
         return taskRepository.save(task)
-                .map(taskMapperDTO::taskTotaskDTO);
+                .flatMap(savedTask -> {
+                    if (file != null && !file.isEmpty()) {
+                        String key = "task-files/" + savedTask.getId() + "/" + file.getOriginalFilename();
+                        return s3Service.uploadFile(key, file)
+                                .flatMap(url -> {
+                                    savedTask.setFileUrl(url);
+                                    return taskRepository.save(savedTask);
+                                })
+                                .then(Mono.just(taskMapperDTO.taskTotaskDTO(savedTask)));
+                    } else {
+                        return Mono.just(taskMapperDTO.taskTotaskDTO(savedTask));
+                    }
+                });
     }
 
     public Mono<Void> deleteTask(UUID id) {
