@@ -76,7 +76,7 @@ public class TaskController {
     public Mono<ResponseEntity<TaskDTO>> updateTask(@PathVariable UUID id, @RequestBody TaskRequestDTO taskDTO) {
         return taskService.updateTask(id, taskDTO)
                 .map(task -> ResponseEntity.status(HttpStatus.OK).body(task))
-                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build()));
+                .switchIfEmpty(Mono.error(new RuntimeException("Não foi encontrado tarefas para esta id:" + id)));
     }
 
 
