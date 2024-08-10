@@ -9,11 +9,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -40,8 +40,8 @@ public class TaskController {
                     content = @Content),
             @ApiResponse(responseCode = "404", description = "Error",
                     content = @Content) })
-    public Flux<ResponseEntity<TaskDTO>> findTask(@RequestParam(required = false) String status) {
-        return taskService.findTaskAllOrFilter(status)
+    public Flux<ResponseEntity<TaskDTO>> findTask(@RequestParam(required = false) String status, Pageable pageable) {
+        return taskService.findTaskAllOrFilter(status, pageable)
                 .map(tasks -> ResponseEntity.status(HttpStatus.OK).body(tasks));
     }
 
@@ -55,11 +55,10 @@ public class TaskController {
                     content = @Content),
             @ApiResponse(responseCode = "404", description = "Error",
                     content = @Content) })
-    @PostMapping(consumes = { "multipart/form-data" })
+    @PostMapping
     @PreAuthorize("hasAuthority('scope_BASIC')")
-    public Mono<ResponseEntity<TaskDTO>> createTask(@RequestPart("task") TaskRequestDTO taskDTO,
-                                                    @RequestPart("file") MultipartFile file) {
-        return taskService.createTask(taskDTO, file)
+    public Mono<ResponseEntity<TaskDTO>> createTask(@RequestBody TaskRequestDTO taskDTO) {
+        return taskService.createTask(taskDTO)
                 .map(task -> ResponseEntity.status(HttpStatus.CREATED).body(task));
     }
 
