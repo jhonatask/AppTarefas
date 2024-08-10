@@ -15,4 +15,5 @@ public class TaskDTO {
     public String description;
     public String priority;
     public String status;
+    public String fileUrl;
 }
