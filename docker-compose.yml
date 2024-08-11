@@ -32,7 +32,7 @@ services:
     ports:
       - ${SPRING_LOCAL_PORT}:${SPRING_DOCKER_PORT}
     environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://root:Pamonha123*@localhost:27017/tasksdb?authSource=admin
+      - SPRING_DATA_MONGODB_URI=mongodb://root:Pamonha123*@mongodb:27017/tasksdb?authSource=admin
       - SPRING_REDIS_HOST=redis
       - SPRING_REDIS_PORT=6379
     volumes:
