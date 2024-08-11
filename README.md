@@ -16,7 +16,11 @@ Redis para cache, OAuth2 para autenticação e autorização, AWS S3 para armaze
 ### AWS
 - **AWS S3:** Bucket criado na região us-east-1
 - **AWS S3:** Credenciais configuradas no arquivo `application.properties`
-Criar seu bucket e configurar as credenciais no arquivo application.properties
+
+
+**Criar seu bucket e configurar as credenciais da aws no arquivo application.properties**
+
+
 ## AWS LAMBDA
 - **AWS LAMBDA:** Criar uma função lambda e configurar o trigger para o S3
 ```java
@@ -39,7 +43,7 @@ public class LambdaHandler implements RequestHandler<S3Event, String> {
 - Docker
 - Docker Compose
 
-### Executando a Aplicação
+### Executando a Aplicação ( ambiente de desenvolvimento)
 
 1. Clone o repositório:
    ```bash
@@ -63,4 +67,3 @@ Acesse a aplicação em http://localhost:8080.
     - **Senha:** Pamonha123*
 6. Para realizar a chamadas das requisições é necessário enviar o token gerado no endpoint de login.
 
-7. 
