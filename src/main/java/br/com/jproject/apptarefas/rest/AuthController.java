@@ -2,19 +2,19 @@ package br.com.jproject.apptarefas.rest;
 
 import br.com.jproject.apptarefas.dto.request.LoginRequestDTO;
 import br.com.jproject.apptarefas.dto.response.ResponseTokenDTO;
+import br.com.jproject.apptarefas.entities.Role;
 import br.com.jproject.apptarefas.repository.UserRepository;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import br.com.jproject.apptarefas.entities.Role;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;

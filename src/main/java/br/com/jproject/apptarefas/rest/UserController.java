@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -53,6 +55,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Error",
                     content = @Content) })
     @GetMapping
+    @PreAuthorize("hasAuthority('scope_ADMIN')")
     public ResponseEntity<Flux<UserResponseDTO>> getAllUsers() {
         Flux<UserResponseDTO> users = userService.getAllUsers();
         return ResponseEntity.status(HttpStatus.OK).body(users);
@@ -70,7 +73,8 @@ public class UserController {
     @GetMapping("/{id}")
     public Mono<ResponseEntity<UserResponseDTO>> getUserById(@PathVariable UUID id) {
         return userService.getUserById(id)
-                .map(user -> ResponseEntity.status(HttpStatus.OK).body(user));
+                .map(user -> ResponseEntity.status(HttpStatus.OK).body(user))
+                .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @Operation(summary = "Atualizar um novo usuario")
@@ -83,9 +87,11 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Error",
                     content = @Content) })
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('scope_ADMIN')")
     public Mono<ResponseEntity<UserResponseDTO>> updateUser(@PathVariable UUID id, @Valid @RequestBody UserRequestDTO userDetails) {
         return userService.updateUser(id, userDetails)
-                .map(user -> ResponseEntity.status(HttpStatus.OK).body(user));
+                .map(user -> ResponseEntity.status(HttpStatus.OK).body(user))
+                .defaultIfEmpty(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     @Operation(summary = "Deletar um usuario")
@@ -98,6 +104,7 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Error",
                     content = @Content) })
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('scope_ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();

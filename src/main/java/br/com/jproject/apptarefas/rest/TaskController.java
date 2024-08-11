@@ -9,10 +9,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,7 +31,7 @@ public class TaskController {
     }
 
     @GetMapping
-    @Operation(summary = "Retorna um lista contendo todas as tarefas ou filtrando pelo status da taref")
+    @Operation(summary = "Retorna um lista contendo todas as tarefas ou filtrando pelo status da Open ou Done")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Listando tarefas com sucesso",
                     content = { @Content(mediaType = "application/json",
@@ -39,13 +40,13 @@ public class TaskController {
                     content = @Content),
             @ApiResponse(responseCode = "404", description = "Error",
                     content = @Content) })
-    public Flux<ResponseEntity<TaskDTO>> findTask(@RequestParam(required = false) String status, Pageable pageable) {
-        return taskService.findTaskAllOrFilter(status, pageable)
+    public Flux<ResponseEntity<TaskDTO>> findTask(@RequestParam(required = false) String status) {
+        return taskService.findTaskAllOrFilter(status)
                 .map(tasks -> ResponseEntity.status(HttpStatus.OK).body(tasks));
     }
 
-    @PostMapping
-    @Operation(summary = "Cadastra um nova tarefa com status pedente")
+
+    @Operation(summary = "Cadastra um nova tarefa com status open")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Sucesso ao cadastrar um tarefa",
                     content = { @Content(mediaType = "application/json",
@@ -54,8 +55,11 @@ public class TaskController {
                     content = @Content),
             @ApiResponse(responseCode = "404", description = "Error",
                     content = @Content) })
-    public Mono<ResponseEntity<TaskDTO>> createTask(@RequestBody TaskRequestDTO taskDTO) {
-        return taskService.createTask(taskDTO)
+    @PostMapping(consumes = { "multipart/form-data" })
+    @PreAuthorize("hasAuthority('scope_BASIC')")
+    public Mono<ResponseEntity<TaskDTO>> createTask(@RequestPart("task") TaskRequestDTO taskDTO,
+                                                    @RequestPart("file") MultipartFile file) {
+        return taskService.createTask(taskDTO, file)
                 .map(task -> ResponseEntity.status(HttpStatus.CREATED).body(task));
     }
 
@@ -72,10 +76,10 @@ public class TaskController {
     public Mono<ResponseEntity<TaskDTO>> updateTask(@PathVariable UUID id, @RequestBody TaskRequestDTO taskDTO) {
         return taskService.updateTask(id, taskDTO)
                 .map(task -> ResponseEntity.status(HttpStatus.OK).body(task))
-                .switchIfEmpty(Mono.error(new RuntimeException("Não foi encontrado tarefas para esta id:" + id)));
+                .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build()));
     }
 
-    @PatchMapping(path = "/{id}")
+
     @Operation(summary = "Atualiza a tarefa para status concluida caso ela exista")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Sucesso ao atualizar uma tarefa",
@@ -85,13 +89,15 @@ public class TaskController {
                     content = @Content),
             @ApiResponse(responseCode = "404", description = "Error",
                     content = @Content) })
+    @PatchMapping(path = "/{id}")
+    @PreAuthorize("hasAuthority('scope_BASIC')")
     public Mono<ResponseEntity<TaskDTO>> makeTaskConcluded(@PathVariable UUID id) {
         return taskService.makeTaskConcluded(id)
                 .map(taskDTO -> ResponseEntity.status(HttpStatus.OK).body(taskDTO))
                 .switchIfEmpty(Mono.error(new RuntimeException("Não foi encontrado tarefas para esta id:" + id)));
     }
 
-    @DeleteMapping(path = "/{id}")
+
     @Operation(summary = "Deleta uma tarefa informada caso ela exista")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Sucesso ao deletar a tarefa",
@@ -101,6 +107,8 @@ public class TaskController {
                     content = @Content),
             @ApiResponse(responseCode = "404", description = "Error",
                     content = @Content) })
+    @DeleteMapping(path = "/{id}")
+    @PreAuthorize("hasAuthority('scope_ADMIN')")
     public Mono<ResponseEntity<Void>> deleteTask(@PathVariable UUID id) {
         return taskService.deleteTask(id)
                 .then(Mono.just(new ResponseEntity<>(HttpStatus.NO_CONTENT)));
